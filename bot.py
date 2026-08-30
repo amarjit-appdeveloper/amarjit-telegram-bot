@@ -922,4 +922,565 @@ def age_calculator(message):
 
         total_days = (
             today - dob
-    
+        ).days
+
+        total_weeks = total_days // 7
+
+        bot.reply_to(
+            message,
+            f"🎂 <b>Age Details:</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📅 <b>DOB:</b> "
+            f"{day:02d}-{month:02d}-{year}\n"
+            f"⏳ <b>Age:</b> "
+            f"<b>{years}</b> Years, "
+            f"<b>{months}</b> Months, "
+            f"<b>{days}</b> Days\n"
+            f"📆 <b>Total Weeks:</b> "
+            f"{total_weeks:,} weeks\n"
+            f"🗓️ <b>Total Days:</b> "
+            f"{total_days:,} days\n"
+            f"━━━━━━━━━━━━━━━━━━━━"
+        )
+
+    except Exception:
+
+        bot.reply_to(
+            message,
+            "❌ Invalid date format!\n"
+            "Please use: "
+            "<code>/age DD-MM-YYYY</code>\n"
+            "Example: "
+            "<code>/age 15-08-2000</code>"
+        )
+
+
+# ==========================================
+# ⚖️ BMI CALCULATOR
+# ==========================================
+
+@bot.message_handler(commands=["bmi"])
+def bmi_calculator(message):
+
+    args = (
+        message.text
+        .replace("/bmi", "")
+        .strip()
+        .split()
+    )
+
+    if len(args) != 2:
+
+        bot.reply_to(
+            message,
+            "ℹ️ <b>Usage:</b> "
+            "<code>/bmi weight height</code>\n"
+            "Example: "
+            "<code>/bmi 68 172</code>"
+        )
+
+        return
+
+    try:
+
+        weight = float(args[0])
+        height_cm = float(args[1])
+
+        height_m = height_cm / 100
+
+        bmi = round(
+            weight / (height_m ** 2),
+            2
+        )
+
+        if bmi < 18.5:
+            category = "Underweight 🟡"
+        elif bmi < 24.9:
+            category = "Normal 🟢"
+        elif bmi < 29.9:
+            category = "Overweight 🟠"
+        else:
+            category = "Obese 🔴"
+
+        bot.reply_to(
+            message,
+            f"⚖️ <b>BMI Calculator Result</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"⚖️ <b>Weight:</b> {weight} kg\n"
+            f"📏 <b>Height:</b> {height_cm} cm\n"
+            f"📊 <b>BMI Score:</b> <b>{bmi}</b>\n"
+            f"🏷️ <b>Category:</b> {category}\n"
+            f"━━━━━━━━━━━━━━━━━━━━"
+        )
+
+    except Exception:
+
+        bot.reply_to(
+            message,
+            "❌ Invalid values.\n"
+            "Example: "
+            "<code>/bmi 70 175</code>"
+        )
+
+
+# ==========================================
+# 🧾 GST CALCULATOR
+# ==========================================
+
+@bot.message_handler(commands=["gst"])
+def gst_calculator(message):
+
+    args = (
+        message.text
+        .replace("/gst", "")
+        .strip()
+        .split()
+    )
+
+    if not args:
+
+        bot.reply_to(
+            message,
+            "ℹ️ <b>Usage:</b> "
+            "<code>/gst amount rate%</code>\n"
+            "Example: "
+            "<code>/gst 5000 18</code>"
+        )
+
+        return
+
+    try:
+
+        amount = float(args[0])
+
+        rate = (
+            float(args[1])
+            if len(args) > 1
+            else 18.0
+        )
+
+        gst_amount = round(
+            (amount * rate) / 100,
+            2
+        )
+
+        total = round(
+            amount + gst_amount,
+            2
+        )
+
+        cgst = round(
+            gst_amount / 2,
+            2
+        )
+
+        sgst = round(
+            gst_amount / 2,
+            2
+        )
+
+        bot.reply_to(
+            message,
+            f"🧾 <b>GST Calculator Result</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💵 <b>Base Amount:</b> "
+            f"₹{amount:,.2f}\n"
+            f"📊 <b>GST Rate:</b> {rate}%\n"
+            f"🏛️ <b>CGST ({rate / 2}%):</b> "
+            f"₹{cgst:,.2f}\n"
+            f"🏛️ <b>SGST ({rate / 2}%):</b> "
+            f"₹{sgst:,.2f}\n"
+            f"💰 <b>Total GST:</b> "
+            f"₹{gst_amount:,.2f}\n"
+            f"💳 <b>Total Payable:</b> "
+            f"<b>₹{total:,.2f}</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━"
+        )
+
+    except Exception:
+
+        bot.reply_to(
+            message,
+            "❌ Invalid values.\n"
+            "Example: "
+            "<code>/gst 1000 18</code>"
+        )
+
+
+# ==========================================
+# 🏦 EMI CALCULATOR
+# ==========================================
+
+@bot.message_handler(commands=["emi"])
+def emi_calculator(message):
+
+    args = (
+        message.text
+        .replace("/emi", "")
+        .strip()
+        .split()
+    )
+
+    if len(args) != 3:
+
+        bot.reply_to(
+            message,
+            "ℹ️ <b>Usage:</b> "
+            "<code>/emi loan rate months</code>\n"
+            "Example: "
+            "<code>/emi 100000 10.5 12</code>"
+        )
+
+        return
+
+    try:
+
+        principal = float(args[0])
+        annual_rate = float(args[1])
+        months = int(args[2])
+
+        monthly_rate = (
+            annual_rate / 12
+        ) / 100
+
+        if monthly_rate == 0:
+
+            emi = principal / months
+
+        else:
+
+            emi = (
+                principal
+                * monthly_rate
+                * ((1 + monthly_rate) ** months)
+                /
+                (((1 + monthly_rate) ** months) - 1)
+            )
+
+        total_payment = emi * months
+        total_interest = total_payment - principal
+
+        bot.reply_to(
+            message,
+            f"🏦 <b>Loan EMI Calculator</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💰 <b>Loan Amount:</b> "
+            f"₹{principal:,.2f}\n"
+            f"📈 <b>Interest Rate:</b> "
+            f"{annual_rate}% p.a.\n"
+            f"⏳ <b>Tenure:</b> "
+            f"{months} Months\n"
+            f"💳 <b>Monthly EMI:</b> "
+            f"<b>₹{emi:,.2f}</b>\n"
+            f"💸 <b>Total Interest:</b> "
+            f"₹{total_interest:,.2f}\n"
+            f"💵 <b>Total Payable:</b> "
+            f"<b>₹{total_payment:,.2f}</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━"
+        )
+
+    except Exception:
+
+        bot.reply_to(
+            message,
+            "❌ Invalid input.\n"
+            "Example: "
+            "<code>/emi 100000 10.5 12</code>"
+        )
+
+
+# ==========================================
+# 🖱️ CALCULATOR CALLBACKS
+# ==========================================
+
+@bot.callback_query_handler(
+    func=lambda call:
+        call.data.startswith(
+            ("c_btn:", "c_act:")
+        )
+)
+def handle_calc_callback(call):
+
+    data = call.data
+
+    curr = extract_expression_from_text(
+        call.message.text
+    )
+
+    mode = "basic"
+
+    if call.message.reply_markup:
+
+        for row in getattr(
+            call.message.reply_markup,
+            "keyboard",
+            []
+        ):
+
+            for btn in row:
+
+                if "Basic Mode" in getattr(
+                    btn,
+                    "text",
+                    ""
+                ):
+
+                    mode = "scientific"
+                    break
+
+    new_result = None
+
+    if data == "c_act:close":
+
+        try:
+
+            bot.delete_message(
+                call.message.chat.id,
+                call.message.message_id
+            )
+
+        except Exception:
+            pass
+
+        return
+
+    elif data == "c_act:clear":
+
+        curr = "0"
+
+    elif data == "c_act:del":
+
+        functions = [
+            "sqrt(",
+            "cbrt(",
+            "sin(",
+            "cos(",
+            "tan(",
+            "asin(",
+            "acos(",
+            "atan(",
+            "log(",
+            "ln("
+        ]
+
+        for fn in functions:
+
+            if curr.endswith(fn):
+
+                curr = curr[:-len(fn)]
+                break
+
+        else:
+
+            if (
+                len(curr) <= 1
+                or curr == "Error"
+            ):
+
+                curr = "0"
+
+            else:
+
+                curr = curr[:-1]
+
+        if not curr:
+            curr = "0"
+
+    elif data == "c_act:mode_sci":
+
+        mode = "scientific"
+
+    elif data == "c_act:mode_basic":
+
+        mode = "basic"
+
+    elif data == "c_act:equal":
+
+        try:
+
+            result = calculate_expression(curr)
+
+            new_result = result
+
+            bot.answer_callback_query(
+                call.id,
+                f"🎯 Answer: {result}"
+            )
+
+        except Exception:
+
+            bot.answer_callback_query(
+                call.id,
+                "❌ Invalid Math Expression!",
+                show_alert=True
+            )
+
+            return
+
+    elif data.startswith("c_btn:"):
+
+        value = data.split(
+            "c_btn:",
+            1
+        )[1]
+
+        if curr in ["0", "Error"]:
+
+            if value == ".":
+
+                curr = "0."
+
+            elif value in "+-*/^%!":
+
+                curr = "0" + value
+
+            elif value == "00":
+
+                curr = "0"
+
+            else:
+
+                curr = value
+
+        else:
+
+            curr += value
+
+    if new_result is not None:
+
+        new_text = build_calc_message(
+            curr,
+            result=new_result
+        )
+
+    else:
+
+        new_text = build_calc_message(
+            curr
+        )
+
+    new_markup = get_calc_keyboard(mode)
+
+    try:
+
+        bot.edit_message_text(
+            new_text,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=new_markup
+        )
+
+    except Exception:
+        pass
+
+    try:
+
+        bot.answer_callback_query(
+            call.id
+        )
+
+    except Exception:
+        pass
+
+
+# ==========================================
+# 🔢 CHAT HANDLER
+# ==========================================
+
+@bot.message_handler(
+    func=lambda m: True
+)
+def handle_message(m):
+
+    text = (
+        m.text.strip()
+        if m.text
+        else ""
+    )
+
+    if not text:
+        return
+
+    # Math
+    if is_math_expression(text):
+
+        try:
+
+            result = calculate_expression(text)
+
+            bot.reply_to(
+                m,
+                f"🧮 <b>Calculation Result</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"📝 <b>Expression:</b> "
+                f"<code>{html.escape(text)}</code>\n"
+                f"🎯 <b>Result:</b> "
+                f"<b><code>{html.escape(str(result))}</code></b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━"
+            )
+
+            return
+
+        except Exception:
+            pass
+
+    # Translation
+    hindi = translate_to_hindi(text)
+
+    bot.reply_to(
+        m,
+        f"🌐 Hindi meaning: "
+        f"<b>{html.escape(hindi)}</b>"
+    )
+
+
+# ==========================================
+# 🔄 START BOT
+# ==========================================
+
+def start_bot():
+
+    print("🤖 Telegram bot is starting...")
+
+    try:
+
+        bot.delete_webhook(
+            drop_pending_updates=True
+        )
+
+    except Exception:
+        pass
+
+    while True:
+
+        try:
+
+            bot.infinity_polling(
+                timeout=20,
+                long_polling_timeout=10,
+                skip_pending=True
+            )
+
+        except Exception as e:
+
+            print("Bot Error:", e)
+
+            time.sleep(5)
+
+
+# ==========================================
+# 🚀 MAIN
+# ==========================================
+
+if __name__ == "__main__":
+
+    print("🚀 Starting web server...")
+
+    web_thread = Thread(
+        target=run_web,
+        daemon=True
+    )
+
+    web_thread.start()
+
+    start_bot()
