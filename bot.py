@@ -9,7 +9,7 @@ import telebot
 from telebot import types
 from deep_translator import GoogleTranslator, MyMemoryTranslator
 
-from flask import Flask
+from flask import Flask, request
 from threading import Thread
 
 
@@ -40,6 +40,32 @@ def home():
 @app.route("/health")
 def health():
     return "OK"
+
+
+# Telegram Webhook endpoint
+@app.route("/webhook", methods=["POST"])
+def telegram_webhook():
+    expected_secret = os.getenv("WEBHOOK_SECRET")
+
+    # If WEBHOOK_SECRET is configured, verify Telegram's secret header.
+    if expected_secret:
+        received_secret = request.headers.get(
+            "X-Telegram-Bot-Api-Secret-Token", ""
+        )
+        if received_secret != expected_secret:
+            return "Forbidden", 403
+
+    try:
+        if not request.is_json:
+            return "Bad Request", 400
+
+        update = telebot.types.Update.de_json(request.get_json())
+        bot.process_new_updates([update])
+        return "OK", 200
+
+    except Exception as e:
+        print("Webhook Error:", e)
+        return "OK", 200
 
 
 def run_web():
@@ -1435,37 +1461,41 @@ def handle_message(m):
 
 
 # ==========================================
-# 🔄 START BOT
+# 🔄 START BOT — WEBHOOK MODE
 # ==========================================
 
-def start_bot():
+def setup_webhook():
+    """Register this Render service as Telegram's webhook receiver."""
+    base_url = os.getenv("RENDER_EXTERNAL_URL")
 
-    print("🤖 Telegram bot is starting...")
-
-    try:
-
-        bot.delete_webhook(
-            drop_pending_updates=True
+    if not base_url:
+        raise ValueError(
+            "RENDER_EXTERNAL_URL is not available. "
+            "Run this bot on a public HTTPS web service."
         )
 
-    except Exception:
-        pass
+    webhook_url = base_url.rstrip("/") + "/webhook"
+    webhook_secret = os.getenv("WEBHOOK_SECRET")
 
-    while True:
+    try:
+        bot.delete_webhook(drop_pending_updates=False)
+    except Exception as e:
+        print("Webhook delete warning:", e)
 
-        try:
+    if webhook_secret:
+        result = bot.set_webhook(
+            url=webhook_url,
+            secret_token=webhook_secret,
+            drop_pending_updates=False
+        )
+    else:
+        result = bot.set_webhook(
+            url=webhook_url,
+            drop_pending_updates=False
+        )
 
-            bot.infinity_polling(
-                timeout=20,
-                long_polling_timeout=10,
-                skip_pending=True
-            )
-
-        except Exception as e:
-
-            print("Bot Error:", e)
-
-            time.sleep(5)
+    print(f"🌐 Telegram webhook set: {webhook_url}")
+    print(f"✅ Webhook result: {result}")
 
 
 # ==========================================
@@ -1483,4 +1513,14 @@ if __name__ == "__main__":
 
     web_thread.start()
 
-    start_bot()
+    # Give Flask a moment to bind to Render's port before registering
+    # the Telegram webhook. Telegram will retry delivery if needed.
+    time.sleep(2)
+
+    setup_webhook()
+
+    print("🤖 Telegram bot is running in WEBHOOK mode!")
+
+    # Keep the main process alive while Flask handles webhook requests.
+    while True:
+        time.sleep(3600)
